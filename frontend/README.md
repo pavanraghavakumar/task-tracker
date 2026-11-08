@@ -25,7 +25,7 @@ npm install
 npm start
 ```
 
-The frontend runs at `http://127.0.0.1:4200`. During integration, configure Angular's development proxy or serve the API at the same origin so `/api/v1` reaches the Flask backend. The production build is created with:
+The frontend runs at `http://127.0.0.1:4200`. The checked-in development proxy sends `/api/v1` to the local Flask backend at `http://127.0.0.1:5001`. The production build is created with:
 
 ```bash
 npm run build

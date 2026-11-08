@@ -34,7 +34,7 @@ Both return `{ access_token, user: { id, name, email, created_at } }` in `data`.
 
 ### `GET /dashboard`
 
-Returns `{ total, pending, in_progress, completed, overdue, completion_rate, upcoming_deadlines }`. `completion_rate` is an integer from 0 to 100; `upcoming_deadlines` is an array of full task objects ordered by ascending due date.
+Returns `{ counts: { total, pending, in_progress, completed, overdue }, completion_percentage, upcoming_deadlines }`. `completion_percentage` is a number from 0 to 100; `upcoming_deadlines` is an array of full task objects ordered by ascending due date. The Angular API adapter maps this response to the dashboard view model.
 
 ## Tasks
 
@@ -57,7 +57,7 @@ Returns one task.
 
 ### `POST /tasks`
 
-### `PUT /tasks/:id`
+### `PATCH /tasks/:id`
 
 Request body: `{ title, description, category_id, priority, status, due_date }`. `category_id` and `due_date` may be `null`. The update endpoint accepts complete or partial fields. Both return the resulting task.
 
@@ -69,7 +69,7 @@ Returns a successful envelope with `data: null`.
 
 - `GET /categories` returns categories ordered by name, including `task_count`.
 - `POST /categories` accepts `{ name, color }` and returns the category.
-- `PUT /categories/:id` accepts `{ name, color }` and returns the category.
+- `PATCH /categories/:id` accepts `{ name, color }` and returns the category.
 - `DELETE /categories/:id` leaves associated tasks uncategorized and returns `data: null`.
 
 Category names should be unique per user, case-insensitively.

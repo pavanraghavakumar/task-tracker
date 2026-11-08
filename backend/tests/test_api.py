@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from app import create_app
+from backend.app import create_app
 
 
 @pytest.fixture()
@@ -71,6 +71,43 @@ def test_full_category_and_task_lifecycle(client):
     assert [item["action"] for item in activity] == ["updated", "created"]
     assert client.delete(f"/api/v1/tasks/{task_id}", headers=headers).status_code == 200
     assert client.delete(f"/api/v1/categories/{category_id}", headers=headers).status_code == 200
+
+
+def test_frontend_contract_category_patch_and_dashboard_shape(client):
+    token = register(client)
+    headers = auth(token)
+    category = client.post("/api/v1/categories", headers=headers, json={"name": "Home", "color": "#2563EB"}).get_json()["data"]
+    renamed = client.patch(
+        f"/api/v1/categories/{category['id']}", headers=headers, json={"name": "Personal", "color": "#16A34A"}
+    )
+    assert renamed.status_code == 200
+    assert renamed.get_json()["data"]["name"] == "Personal"
+
+    task = client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"title": "Frontend contract", "category_id": category["id"], "priority": "medium"},
+    ).get_json()["data"]
+    updated = client.patch(f"/api/v1/tasks/{task['id']}", headers=headers, json={"priority": "high"})
+    assert updated.status_code == 200
+    assert updated.get_json()["data"]["priority"] == "high"
+
+    dashboard = client.get("/api/v1/dashboard", headers=headers).get_json()["data"]
+    assert dashboard["counts"]["total"] == 1
+    assert dashboard["completion_percentage"] == 0.0
+    assert isinstance(dashboard["upcoming_deadlines"], list)
+
+
+def test_deleting_category_leaves_task_uncategorized(client):
+    token = register(client)
+    headers = auth(token)
+    category = client.post("/api/v1/categories", headers=headers, json={"name": "Temporary", "color": "#64748B"}).get_json()["data"]
+    task = client.post("/api/v1/tasks", headers=headers, json={"title": "Keep me", "category_id": category["id"]}).get_json()["data"]
+
+    assert client.delete(f"/api/v1/categories/{category['id']}", headers=headers).status_code == 200
+    persisted = client.get(f"/api/v1/tasks/{task['id']}", headers=headers)
+    assert persisted.status_code == 200
+    assert persisted.get_json()["data"]["category"] is None
 
 
 def test_data_is_isolated_per_user(client):
